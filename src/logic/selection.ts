@@ -80,16 +80,16 @@ export class PlayerSelection {
             let rotatedX = x;
             let rotatedY = y;
             if (this.rotation === 1) {
-                rotatedX = -y;
-                rotatedY = x;
+                rotatedX = y;
+                rotatedY = -x;
                 arrow.rotation = (arrow.rotation + 1) % 4;
             } else if (this.rotation === 2) {
                 rotatedX = -x;
                 rotatedY = -y;
                 arrow.rotation = (arrow.rotation + 2) % 4;
             } else if (this.rotation === 3) {
-                rotatedX = y;
-                rotatedY = -x;
+                rotatedX = -y;
+                rotatedY = x;
                 arrow.rotation = (arrow.rotation + 3) % 4;
             }
             this.rotatedArrows.set(pos2hash(rotatedX, rotatedY), arrow);

@@ -376,6 +376,7 @@ export class Game {
     private readonly onMouseDown = (event: MouseEvent) => {
         if (event.target !== this.gl.canvas)
             return;
+        event.preventDefault();
         if (event.button === 0) {
             this.mouseDown = true;
         } else if (event.button === 1) {
@@ -461,27 +462,35 @@ export class Game {
         } else if (event.code === "Enter") {
             if (this.ticker.paused)
                 this.ticker.step();
-        } else {
+        } else if (event.code === "KeyW") {
             if (this.selection.arrows) {
-                if (event.code === "KeyW") {
-                    this.selection.setRotation(0);
-                } else if (event.code === "KeyA") {
-                    this.selection.setRotation(1);
-                } else if (event.code === "KeyS") {
-                    this.selection.setRotation(2);
-                } else if (event.code === "KeyD") {
-                    this.selection.setRotation(3);
-                } else if (event.code === "KeyF") {
-                    this.selection.flip();
-                }
+                this.selection.setRotation(0);
             }
+        } else if (event.code === "KeyA") {
+            if (this.selection.arrows) {
+                this.selection.setRotation(1);
+            }
+        } else if (event.code === "KeyS") {
+            if (this.selection.arrows) {
+                this.selection.setRotation(2);
+            }
+        } else if (event.code === "KeyD") {
+            if (this.selection.arrows) {
+                this.selection.setRotation(3);
+            }
+        } else if (event.code === "KeyF") {
+            if (this.selection.arrows) {
+                this.selection.flip();
+            }
+        } else if (event.code === "KeyQ") {
             if (arrow && arrow.arrowType !== 0) {
-                if (event.code === "KeyQ") {
-                    this.ui.toolbar.selectItem(0, arrow.arrowType - 1);
-                    this.selection.selectArrow(arrow);
-                }
+                this.ui.toolbar.selectItem(0, arrow.arrowType - 1);
+                this.selection.selectArrow(arrow);
             }
+        } else if (event.code !== "KeyE") {
+            return;
         }
+        event.preventDefault();
     };
 
     private readonly onKeyUp = (event: KeyboardEvent) => {
