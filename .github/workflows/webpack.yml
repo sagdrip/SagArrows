@@ -36,4 +36,4 @@ jobs:
         date > public/date.txt
         git add --force public
         git commit -m "Build"
-        git push -f origin `git subtree split -P dist`:refs/heads/gh-pages
+        git push -f origin `git subtree split -P public`:refs/heads/gh-pages
