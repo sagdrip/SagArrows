@@ -12,6 +12,10 @@ import { ARROWS, MEDALS } from "./ui/toolbar";
 
 export const SAVE_INTERVAL = 3000;
 
+export const ZOOM_VALUE = 1.2;
+export const MIN_SCALE = 0.05;
+export const MAX_SCALE = 2;
+
 export class Game {
     private readonly gl: WebGLRenderingContext;
     private readonly render: Render;
@@ -268,13 +272,13 @@ export class Game {
 
         this.render.setArrowAlpha(1.0);
 
-        const minX = ~~(-this.offset[0] / CELL_SIZE / CHUNK_SIZE) - 1;
-        const minY = ~~(-this.offset[1] / CELL_SIZE / CHUNK_SIZE) - 1;
-        const maxX = ~~(-this.offset[0] / CELL_SIZE / CHUNK_SIZE + this.gl.canvas.width / CHUNK_SIZE);
-        const maxY = ~~(-this.offset[1] / CELL_SIZE / CHUNK_SIZE + this.gl.canvas.height / CHUNK_SIZE);
+        const minChunkX = ~~(-this.offset[0] / CELL_SIZE / CHUNK_SIZE) - 1;
+        const minChunkY = ~~(-this.offset[1] / CELL_SIZE / CHUNK_SIZE) - 1;
+        const maxChunkX = ~~(-this.offset[0] / CELL_SIZE / CHUNK_SIZE + this.gl.canvas.width / this.scale / CHUNK_SIZE);
+        const maxChunkY = ~~(-this.offset[1] / CELL_SIZE / CHUNK_SIZE + this.gl.canvas.height / this.scale / CHUNK_SIZE);
         this.map.chunks.forEach((chunk, position) => {
             const [chunkX, chunkY] = hash2chunkPos(position);
-            if (!(chunkX >= minX && chunkX <= maxX && chunkY >= minY && chunkY <= maxY))
+            if (!(chunkX >= minChunkX && chunkX <= maxChunkX && chunkY >= minChunkY && chunkY <= maxChunkY))
                 return;
             const arrowOffsetX = this.offset[0] / CELL_SIZE;
             const arrowOffsetY = this.offset[1] / CELL_SIZE;
@@ -282,13 +286,13 @@ export class Game {
                 for (let x = 0; x < CHUNK_SIZE; ++x) {
                     const arrow = chunk.getArrow(x, y);
                     if (arrow.arrowType > 0) {
-                        const xOffset = (chunkX * CHUNK_SIZE + x) + arrowOffsetX;
-                        const yOffset = (chunkY * CHUNK_SIZE + y) + arrowOffsetY;
+                        const xOffset = (chunkX * CHUNK_SIZE + x) * this.scale + arrowOffsetX;
+                        const yOffset = (chunkY * CHUNK_SIZE + y) * this.scale + arrowOffsetY;
                         let color: [number, number, number];
                         if (arrow.active) color = [1, 0, 0];
                         else if (arrow.lastState.signalCount > 0) color = [.3, .5, 1];
                         else color = [1, 1, 1];
-                        this.render.drawArrow([xOffset, yOffset], arrow.arrowType, arrow.medalType, arrow.rotation, arrow.flipped, color);
+                        this.render.drawArrow([xOffset, yOffset], this.scale, arrow.arrowType, arrow.medalType, arrow.rotation, arrow.flipped, color);
                     }
                 }
         });
@@ -297,13 +301,16 @@ export class Game {
 
         const [mouseX, mouseY] = this.screenToWorld(...this.mousePosition);
         if (this.selection.arrows) {
+            const maxX = ~~(-this.offset[0] / CELL_SIZE + this.gl.canvas.width / this.scale);
+            const maxY = ~~(-this.offset[1] / CELL_SIZE + this.gl.canvas.height / this.scale);
             this.selection.rotatedArrows.forEach((arrow, position) => {
                 const [arrowX, arrowY] = hash2pos(position);
                 if (!(mouseX + arrowX <= maxX && mouseY + arrowY <= maxY))
                     return;
                 this.render.drawArrow(
-                    [this.offset[0] / CELL_SIZE + mouseX + arrowX,
-                     this.offset[1] / CELL_SIZE + mouseY + arrowY],
+                    [this.offset[0] / CELL_SIZE + mouseX * this.scale + arrowX * this.scale,
+                     this.offset[1] / CELL_SIZE + mouseY * this.scale + arrowY * this.scale],
+                    this.scale,
                     arrow.arrowType,
                     arrow.medalType,
                     arrow.rotation,
@@ -312,8 +319,9 @@ export class Game {
             });
         } else if (this.selection.medal) {
             this.render.drawArrow(
-                [this.offset[0] / CELL_SIZE + mouseX,
-                 this.offset[1] / CELL_SIZE + mouseY],
+                [this.offset[0] / CELL_SIZE + mouseX * this.scale,
+                 this.offset[1] / CELL_SIZE + mouseY * this.scale],
+                this.scale,
                 0,
                 this.selection.medal,
                 0,
@@ -324,40 +332,38 @@ export class Game {
         for (const hash of this.highlightedArrows) {
             const [arrowX, arrowY] = hash2pos(hash);
             this.render.drawRect(
-                [arrowX * CELL_SIZE + this.offset[0], arrowY * CELL_SIZE + this.offset[1]],
-                [CELL_SIZE, CELL_SIZE],
-                [0.98, 0.784, 0.282],
-                true
+                [arrowX * CELL_SIZE * this.scale + this.offset[0], arrowY * CELL_SIZE * this.scale + this.offset[1]],
+                [CELL_SIZE * this.scale, CELL_SIZE * this.scale],
+                [0.98, 0.784, 0.282]
             );
         }
 
-        this.render.drawBackground(this.offset);
+        this.render.drawBackground(this.offset, this.scale);
 
         if (this.highlightStartPosition && this.highlightSize) {
             this.render.drawRect(
                 [this.highlightStartPosition[0] + this.offset[0], this.highlightStartPosition[1] + this.offset[1]],
                 this.highlightSize,
-                [0.996, 0.957, 0.855],
-                false
+                [0.996, 0.957, 0.855]
             );
         }
     }
 
     setScale(scale: number, center: [number, number]) {
-        if (scale < 0.5)
-            scale = 0.5;
-        if (scale > 2)
-            scale = 2;
-        const centerX: number = center[0] * window.devicePixelRatio * this.scale - this.offset[0];
-        const centerY: number = center[1] * window.devicePixelRatio * this.scale - this.offset[1];
-        this.offset = [center[0] * window.devicePixelRatio * scale - centerX,
-                       center[1] * window.devicePixelRatio * scale - centerY];
+        if (scale < MIN_SCALE)
+            scale = MIN_SCALE;
+        if (scale > MAX_SCALE)
+            scale = MAX_SCALE;
+        this.offset = [this.offset[0] / this.scale * scale + center[0] - center[0] / this.scale * scale,
+                       this.offset[1] / this.scale * scale + center[1] - center[1] / this.scale * scale];
+        if (this.startOffset)
+            this.startOffset = this.startOffset; // TODO
         this.scale = scale;
     }
 
     private screenToWorld(x: number, y: number) {
-        const arrowX = (x - this.offset[0]) / CELL_SIZE;
-        const arrowY = (y - this.offset[1]) / CELL_SIZE;
+        const arrowX = (x - this.offset[0]) / this.scale / CELL_SIZE;
+        const arrowY = (y - this.offset[1]) / this.scale / CELL_SIZE;
         return [~~arrowX - +(arrowX < 0), ~~arrowY - +(arrowY < 0)]
     }
 
@@ -513,9 +519,9 @@ export class Game {
         if (event.target !== this.gl.canvas)
             return;
         if (event.deltaY > 0) {
-            // this.setScale(this.scale / 1.2, [event.clientX, event.clientY]);
+            this.setScale(this.scale / ZOOM_VALUE, [event.clientX, event.clientY]);
         } else if (event.deltaY < 0) {
-            // this.setScale(this.scale * 1.2, [event.clientX, event.clientY]);
+            this.setScale(this.scale * ZOOM_VALUE, [event.clientX, event.clientY]);
         }
     };
 

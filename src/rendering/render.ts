@@ -56,7 +56,7 @@ export class Render {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
     }
 
-    drawBackground(offset: readonly [number, number]) {
+    drawBackground(offset: readonly [number, number], scale: number) {
         this.backgroundShader.use();
 
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
@@ -66,10 +66,10 @@ export class Render {
         this.gl.vertexAttribPointer(this.backgroundShader.positionAttribute, 2, this.gl.FLOAT, false, 0, 0);
 
         this.gl.uniform4f(this.backgroundShader.transformUniform,
-            offset[0] / CELL_SIZE,
-            offset[1] / CELL_SIZE,
-            this.gl.canvas.width / CELL_SIZE,
-            this.gl.canvas.height / CELL_SIZE);
+            offset[0] / scale / CELL_SIZE,
+            offset[1] / scale / CELL_SIZE,
+            this.gl.canvas.width / scale / CELL_SIZE,
+            this.gl.canvas.height / scale / CELL_SIZE);
 
         this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
     }
@@ -88,12 +88,12 @@ export class Render {
         this.gl.uniform1f(this.arrowShader.alphaUniform, alpha);
     }
 
-    drawArrow(offset: readonly [number, number], type: number, medal: number, rotation: number, flipped: boolean, background: [number, number, number]) {
+    drawArrow(offset: readonly [number, number], scale: number, type: number, medal: number, rotation: number, flipped: boolean, background: [number, number, number]) {
         this.gl.uniform4f(this.arrowShader.transformUniform,
-            offset[0],
-            offset[1],
-            CELL_SIZE / this.gl.canvas.width,
-            CELL_SIZE / this.gl.canvas.height);
+            offset[0] / scale,
+            offset[1] / scale,
+            CELL_SIZE * scale / this.gl.canvas.width,
+            CELL_SIZE * scale / this.gl.canvas.height);
 
         this.gl.uniform3f(this.arrowShader.backgroundUniform, background[0], background[1], background[2]);
 
@@ -105,7 +105,7 @@ export class Render {
         this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
     }
 
-    drawRect(offset: readonly [number, number], size: readonly [number, number], color: [number, number, number], border: boolean) {
+    drawRect(offset: readonly [number, number], size: readonly [number, number], color: [number, number, number]) {
         this.rectShader.use();
 
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
@@ -121,8 +121,6 @@ export class Render {
             size[1] / this.gl.canvas.height);
 
         this.gl.uniform3f(this.rectShader.colorUniform, color[0], color[1], color[2]);
-
-        this.gl.uniform1f(this.rectShader.borderUniform, 1 * +border);
 
         this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
     }
