@@ -1,6 +1,8 @@
+import { Meter } from "./debug/meter";
 import { Arrow } from "./logic/arrow";
-import { CHUNK_SIZE } from "./logic/chunk";
+import { Chunk, CHUNK_SIZE } from "./logic/chunk";
 import { GameMap } from "./logic/game-map";
+import { LogicNode } from "./logic/node";
 import { hash2chunkPos, hash2pos, pos2hash } from "./logic/pos2hash";
 import { load, save } from "./logic/save";
 import { PlayerSelection } from "./logic/selection";
@@ -16,6 +18,8 @@ export const ZOOM_VALUE = 1.2;
 export const MIN_SCALE = 0.05;
 export const MAX_SCALE = 2;
 
+export const UPDATE_SYSTEM = 0; // 0 - CA, 1 - nodes
+
 export class Game {
     private readonly gl: WebGLRenderingContext;
     private readonly render: Render;
@@ -24,6 +28,9 @@ export class Game {
     private readonly map: GameMap;
     private readonly ticker: Ticker;
     private readonly resizeObserver: ResizeObserver;
+
+    private readonly tpsMeter: Meter;
+    private readonly fpsMeter: Meter;
 
     private saveInterval: number;
 
@@ -45,6 +52,8 @@ export class Game {
 
     private offset: readonly [number, number] = [0, 0];
     private scale: number = 1;
+
+    private pausedWhenHidden: boolean = false;
 
     constructor(parent: HTMLElement, gl: WebGLRenderingContext) {
         this.gl = gl;
@@ -70,10 +79,14 @@ export class Game {
         this.map = new GameMap();
         this.ticker = new Ticker(this.ui.slider.value, this.tickCallback, this.frameCallback, this.afterFrameCallback);
         this.resizeObserver = new ResizeObserver(() => this.render.resize());
+
+        this.tpsMeter = new Meter();
+        this.fpsMeter = new Meter();
     }
     
     start() {
         this.resizeObserver.observe(this.gl.canvas as HTMLCanvasElement);
+        document.addEventListener("visibilitychange", this.onVisibilityChange);
         document.addEventListener("mousedown", this.onMouseDown);
         document.addEventListener("mouseup", this.onMouseUp);
         document.addEventListener("mousemove", this.onMouseMove);
@@ -87,14 +100,18 @@ export class Game {
         this.ticker.start();
         this.saveInterval = window.setInterval(() => this.save(), SAVE_INTERVAL);
 
-        const saveCode = new URLSearchParams(location.search).get("save");
+        const saveCode = location.hash.slice(1);
         if (saveCode)
             load(this.map, saveCode);
+
+        this.createNodes();
+        this.simplifyNodes();
     }
 
     destroy() {
         this.ui.destroy();
         this.resizeObserver.disconnect();
+        document.removeEventListener("visibilitychange", this.onVisibilityChange);
         document.removeEventListener("mousedown", this.onMouseDown);
         document.removeEventListener("mouseup", this.onMouseUp);
         document.removeEventListener("mousemove", this.onMouseMove);
@@ -111,24 +128,120 @@ export class Game {
 
     save() {
         const url = new URL(location.href);
-        url.searchParams.set("save", save(this.map));
+        url.hash = save(this.map);
         history.pushState(null, "", url);
+    }
+
+    private createNodes() {
+        this.map.chunks.forEach((chunk) => {
+            for (let y = 0; y < CHUNK_SIZE; ++y)
+                for (let x = 0; x < CHUNK_SIZE; ++x)
+                    this.createNode(chunk, x, y);
+        });
+    }
+
+    private createNodeRelative(chunk: Chunk, arrow: Arrow, x: number, y: number, dx: number, dy: number) {
+        if (arrow.flipped)
+            dx = -dx;
+        if (arrow.rotation === 0) {
+            y += dy;
+            x += dx;
+        } else if (arrow.rotation === 1) {
+            x += dy;
+            y -= dx;
+        } else if (arrow.rotation === 2) {
+            y -= dy;
+            x -= dx;
+        } else if (arrow.rotation === 3) {
+            x -= dy;
+            y += dx;
+        }
+        let targetChunk = chunk;
+        if (x >= CHUNK_SIZE) {
+            if (y >= CHUNK_SIZE) {
+                targetChunk = chunk.adjacentChunks[3];
+                x -= CHUNK_SIZE;
+                y -= CHUNK_SIZE;
+            } else if (y < 0) {
+                targetChunk = chunk.adjacentChunks[1];
+                x -= CHUNK_SIZE;
+                y += CHUNK_SIZE;
+            } else {
+                targetChunk = chunk.adjacentChunks[2];
+                x -= CHUNK_SIZE;
+            }
+        } else if (x < 0) {
+            if (y < 0) {
+                targetChunk = chunk.adjacentChunks[7];
+                x += CHUNK_SIZE;
+                y += CHUNK_SIZE;
+            } else if (y >= CHUNK_SIZE) {
+                targetChunk = chunk.adjacentChunks[5];
+                x += CHUNK_SIZE;
+                y -= CHUNK_SIZE;
+            } else {
+                targetChunk = chunk.adjacentChunks[6];
+                x += CHUNK_SIZE;
+            }
+        } else if (y < 0) {
+            targetChunk = chunk.adjacentChunks[0];
+            y += CHUNK_SIZE;
+        } else if (y >= CHUNK_SIZE) {
+            targetChunk = chunk.adjacentChunks[4];
+            y -= CHUNK_SIZE;
+        }
+        if (!targetChunk)
+            return;
+        return this.createNode(targetChunk, x, y);
+    }
+
+    private createNode(chunk: Chunk, x: number, y: number) {
+        const arrow = chunk.getArrow(x, y);
+        if (arrow.arrowType === 0)
+            return;
+        if (arrow.originalNode)
+            return arrow.originalNode;
+        const node = new LogicNode(arrow.medalType, 1);
+        arrow.originalNode = node;
+        if (arrow.arrowType === 1) {
+            node.targets.push(
+                this.createNodeRelative(chunk, arrow, x, y, 0, -1)
+            );
+        }
+        return node;
+    }
+
+    private simplifyNodes() {
+
     }
 
     private readonly tickCallback = () => {
         this.update();
+        this.tpsMeter.step();
     };
 
     private readonly frameCallback = () => {
         this.updatePlayerInput();
+        this.tpsMeter.update();
+        this.fpsMeter.update();
     };
 
     private readonly afterFrameCallback = () => {
         this.draw();
+        this.fpsMeter.step();
+        this.ui.debugInfo.update(this.tpsMeter.value, this.fpsMeter.value);
     };
 
     
     private update() {
+        if (UPDATE_SYSTEM === 0) {
+            this.updateCA();
+        } else {
+            this.updateNodes();
+        }
+    }
+
+    private updateCA() {
         this.map.chunks.forEach((chunk) => {
             for (let y = 0; y < CHUNK_SIZE; ++y)
                 for (let x = 0; x < CHUNK_SIZE; ++x) {
@@ -207,6 +320,10 @@ export class Game {
         });
     }
 
+    private updateNodes() {
+
+    }
+
     private updatePlayerInput() {
         const [mouseX, mouseY] = this.screenToWorld(...this.mousePosition);
         const arrow = this.map.getArrow(mouseX, mouseY);
@@ -272,10 +389,10 @@ export class Game {
 
         this.render.setArrowAlpha(1.0);
 
-        const minChunkX = ~~(-this.offset[0] / CELL_SIZE / CHUNK_SIZE) - 1;
-        const minChunkY = ~~(-this.offset[1] / CELL_SIZE / CHUNK_SIZE) - 1;
-        const maxChunkX = ~~(-this.offset[0] / CELL_SIZE / CHUNK_SIZE + this.gl.canvas.width / this.scale / CHUNK_SIZE);
-        const maxChunkY = ~~(-this.offset[1] / CELL_SIZE / CHUNK_SIZE + this.gl.canvas.height / this.scale / CHUNK_SIZE);
+        const minChunkX = ~~(-this.offset[0] / this.scale / CELL_SIZE / CHUNK_SIZE) - 1;
+        const minChunkY = ~~(-this.offset[1] / this.scale / CELL_SIZE / CHUNK_SIZE) - 1;
+        const maxChunkX = ~~(-this.offset[0] / this.scale / CELL_SIZE / CHUNK_SIZE + this.gl.canvas.width / this.scale / CHUNK_SIZE);
+        const maxChunkY = ~~(-this.offset[1] / this.scale / CELL_SIZE / CHUNK_SIZE + this.gl.canvas.height / this.scale / CHUNK_SIZE);
         this.map.chunks.forEach((chunk, position) => {
             const [chunkX, chunkY] = hash2chunkPos(position);
             if (!(chunkX >= minChunkX && chunkX <= maxChunkX && chunkY >= minChunkY && chunkY <= maxChunkY))
@@ -379,6 +496,15 @@ export class Game {
         return this.isKeyPressed("ControlLeft") || this.isKeyPressed("ControlRight");
     }
 
+    private readonly onVisibilityChange = () => {
+        if (document.hidden) {
+            this.pausedWhenHidden = this.ticker.paused;
+            this.ticker.setPaused(true);
+        } else {
+            this.ticker.setPaused(this.pausedWhenHidden);
+        }
+    };
+
     private readonly onMouseDown = (event: MouseEvent) => {
         if (event.target !== this.gl.canvas)
             return;
@@ -443,6 +569,8 @@ export class Game {
         } else if (event.code === "Tab") {
             event.preventDefault();
             this.ui.toolbar.nextSection();
+        } else if (event.code === "F3") {
+            this.ui.debugInfo.toggle();
         } else if (event.code === "Backquote") {
             this.ui.toolbar.clearSelection();
         } else if (event.code === "KeyN") {

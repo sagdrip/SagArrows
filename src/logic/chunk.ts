@@ -21,6 +21,44 @@ export class Chunk {
         return this.arrows[y * CHUNK_SIZE + x];
     }
 
+    getArrowRelative(x: number, y: number) {
+        let targetChunk: Chunk = this;
+        if (x >= CHUNK_SIZE) {
+            if (y >= CHUNK_SIZE) {
+                targetChunk = this.adjacentChunks[3];
+                x -= CHUNK_SIZE;
+                y -= CHUNK_SIZE;
+            } else if (y < 0) {
+                targetChunk = this.adjacentChunks[1];
+                x -= CHUNK_SIZE;
+                y += CHUNK_SIZE;
+            } else {
+                targetChunk = this.adjacentChunks[2];
+                x -= CHUNK_SIZE;
+            }
+        } else if (x < 0) {
+            if (y < 0) {
+                targetChunk = this.adjacentChunks[7];
+                x += CHUNK_SIZE;
+                y += CHUNK_SIZE;
+            } else if (y >= CHUNK_SIZE) {
+                targetChunk = this.adjacentChunks[5];
+                x += CHUNK_SIZE;
+                y -= CHUNK_SIZE;
+            } else {
+                targetChunk = this.adjacentChunks[6];
+                x += CHUNK_SIZE;
+            }
+        } else if (y < 0) {
+            targetChunk = this.adjacentChunks[0];
+            y += CHUNK_SIZE;
+        } else if (y >= CHUNK_SIZE) {
+            targetChunk = this.adjacentChunks[4];
+            y -= CHUNK_SIZE;
+        }
+        return targetChunk?.getArrow(x, y);
+    }
+
     isEmpty() {
         return this.arrows.every((arrow) => arrow.arrowType === 0);
     }

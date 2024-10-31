@@ -1,6 +1,6 @@
 import { createElement } from "../dom";
 
-export const TPS_VALUES = [2, 16, 64, 256, 1024];
+export const TPS_VALUES = [2, 16, 64, 256, 1024, 4096, 16384, 65536];
 
 export class TPSSlider extends EventTarget {
     private readonly element: HTMLDivElement;

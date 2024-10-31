@@ -1,3 +1,5 @@
+import { LogicNode } from "./node";
+
 export class Arrow {
     arrowType: number = 0;
     medalType: number = 0;
@@ -7,6 +9,10 @@ export class Arrow {
     active: boolean = false;
 
     lastState: Arrow = this;
+
+    node: LogicNode;
+    offset: number;
+    originalNode: LogicNode;
 
     constructor(arrowType: number = 0, medalType: number = 0, rotation: number = 0, flipped: boolean = false) {
         this.arrowType = arrowType;

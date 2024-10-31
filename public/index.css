@@ -134,3 +134,18 @@ html, body {
     color: white;
     border-radius: 1vh;
 }
+
+.debug-info {
+    position: absolute;
+    top: 1vh;
+    left: 1vw;
+    color: #fac848;
+    font-size: 2vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: bold;
+    pointer-events: none;
+}
+
+.hidden {
+    display: none;
+}
