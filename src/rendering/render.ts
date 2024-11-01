@@ -7,7 +7,7 @@ export const CELL_SIZE = 64;
 
 export const ATLAS_TILE_SIZE = 512;
 
-export class Render {
+export class Render { // TODO: Add dispose method and optimize GPU usage
     private readonly gl: WebGLRenderingContext;
 
     private readonly positionBuffer: WebGLBuffer;
@@ -72,6 +72,8 @@ export class Render {
             this.gl.canvas.height / scale / CELL_SIZE);
 
         this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
+
+        this.gl.disableVertexAttribArray(this.backgroundShader.positionAttribute);
     }
 
     useArrowShader() {
@@ -105,6 +107,10 @@ export class Render {
         this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
     }
 
+    disableArrowShader() {
+        this.gl.disableVertexAttribArray(this.arrowShader.positionAttribute);
+    }
+
     drawRect(offset: readonly [number, number], size: readonly [number, number], color: [number, number, number]) {
         this.rectShader.use();
 
@@ -123,5 +129,7 @@ export class Render {
         this.gl.uniform3f(this.rectShader.colorUniform, color[0], color[1], color[2]);
 
         this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
+
+        this.gl.disableVertexAttribArray(this.rectShader.positionAttribute);
     }
 }

@@ -1,24 +1,26 @@
 import { createElement } from "../dom";
 
 export class Icon extends EventTarget {
-    private readonly element: HTMLDivElement;
+    private readonly element: HTMLSpanElement;
 
     constructor(parent: HTMLElement, texture: string, tileIndex: number, tileWidth: number, tileHeight: number) {
         super();
 
-        this.element = createElement("div", "icon-container");
-        const image = createElement("img", "icon");
-        image.src = texture;
-        image.draggable = false;
-        image.onload = () => {
-            image.style.width = `${image.naturalWidth * 100 / tileWidth}%`;
-            image.style.height = `${image.naturalHeight * 100 / tileHeight}%`;
-            const xOffset = (tileIndex % (image.naturalWidth / tileWidth)) * 100 / image.naturalWidth * tileWidth;
-            const yOffset = ~~(tileIndex / (image.naturalHeight / tileHeight)) * 100 / image.naturalHeight * tileHeight;
-            image.style.transform = `translate(-${xOffset}%, -${yOffset}%)`;
+        const img = new Image();
+        img.src = texture;
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = tileWidth;
+            canvas.height = tileHeight;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, (tileIndex % 16) * tileWidth, ~~(tileIndex / 16) * tileHeight, tileWidth, tileHeight, 0, 0, tileWidth, tileHeight);
+            this.element.style.backgroundImage = `url(${canvas.toDataURL()})`;
+            img.remove();
+            canvas.remove();
         };
-        image.addEventListener("click", () => this.dispatchEvent(new MouseEvent("click")));
-        this.element.append(image);
+
+        this.element = createElement("span", "icon");
+        this.element.addEventListener("click", () => this.dispatchEvent(new MouseEvent("click")));
         parent.appendChild(this.element);
     }
 

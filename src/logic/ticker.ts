@@ -40,23 +40,23 @@ export class Ticker {
     }
 
     private updateFrame() {
-        const averageFPS = 1000 / (performance.now() - this.lastUpdate);
-        this.lastUpdate = performance.now();
+        let now = performance.now();
+        const averageFPS = 1000 / (now - this.lastUpdate);
+        this.lastUpdate = now;
         this.idleTime = 0;
         {
-            const startTime = performance.now();
+            const startTime = now;
             this.frameCallback?.();
             this.idleTime += performance.now() - startTime;
         }
         if (!this.paused) {
-            let now: number;
             while ((now = performance.now()) >= this.nextUpdate) {
                 this.updateTick();
                 this.nextUpdate += Math.max(this.interval, this.updateTime / this.updates + (averageFPS * (this.idleTime + REFRESH_TIME)) / (1000 * this.updates / this.updateTime));
             }
         }
         {
-            const startTime = performance.now();
+            const startTime = now;
             this.afterFrameCallback?.();
             this.idleTime += performance.now() - startTime;
         }
@@ -71,7 +71,7 @@ export class Ticker {
     private reset() {
         const now = performance.now();
         this.lastUpdate = now;
-        this.nextUpdate = now;
+        this.nextUpdate = now + this.interval;
         this.updateTime = 0;
         this.updates = 0;
         this.idleTime = 0;

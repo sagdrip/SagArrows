@@ -18,7 +18,7 @@ export const ZOOM_VALUE = 1.2;
 export const MIN_SCALE = 0.05;
 export const MAX_SCALE = 2;
 
-export const UPDATE_SYSTEM = 0; // 0 - CA, 1 - nodes
+export let updateSystem = 0; // 0 - CA, 1 - nodes
 
 export class Game {
     private readonly gl: WebGLRenderingContext;
@@ -35,6 +35,8 @@ export class Game {
     private saveInterval: number;
 
     private mousePosition: readonly [number, number] = [0, 0];
+
+    private nodes: LogicNode[] = [];
 
     private mouseStartPosition: readonly [number, number];
     private startOffset: readonly [number, number];
@@ -207,12 +209,84 @@ export class Game {
             node.targets.push(
                 this.createNodeRelative(chunk, arrow, x, y, 0, -1)
             );
+        } else if (arrow.arrowType === 2) {
+            node.targets.push(
+                this.createNodeRelative(chunk, arrow, x, y, -1, 0),
+                this.createNodeRelative(chunk, arrow, x, y,  1, 0)
+            );
+        } else if (arrow.arrowType === 3) {
+            node.targets.push(
+                this.createNodeRelative(chunk, arrow, x, y,  0, -1),
+                this.createNodeRelative(chunk, arrow, x, y,  1,  0)
+            );
+        } else if (arrow.arrowType === 4) {
+            node.targets.push(
+                this.createNodeRelative(chunk, arrow, x, y, -1,  0),
+                this.createNodeRelative(chunk, arrow, x, y,  0, -1),
+                this.createNodeRelative(chunk, arrow, x, y,  1,  0)
+            );
+        } else if (arrow.arrowType === 5) {
+            node.targets.push(
+                this.createNodeRelative(chunk, arrow, x, y, -1,  0),
+                this.createNodeRelative(chunk, arrow, x, y,  1,  0),
+                this.createNodeRelative(chunk, arrow, x, y,  0, -1),
+                this.createNodeRelative(chunk, arrow, x, y,  0,  1)
+            );
+        } else if (arrow.arrowType === 6) {
+            node.targets.push(
+                this.createNodeRelative(chunk, arrow, x, y, 0, -2)
+            );
+        } else if (arrow.arrowType === 7) {
+            node.targets.push(
+                this.createNodeRelative(chunk, arrow, x, y, 1, -1)
+            );
+        } else if (arrow.arrowType === 8) {
+            node.targets.push(
+                this.createNodeRelative(chunk, arrow, x, y, 0, -1),
+                this.createNodeRelative(chunk, arrow, x, y, 1, -1)
+            );
+        } else if (arrow.arrowType === 9) {
+            node.targets.push(
+                this.createNodeRelative(chunk, arrow, x, y,  0, -2),
+                this.createNodeRelative(chunk, arrow, x, y,  1,  0)
+            );
+        } else if (arrow.arrowType === 10) {
+            node.targets.push(
+                this.createNodeRelative(chunk, arrow, x, y, -2, 0),
+                this.createNodeRelative(chunk, arrow, x, y,  1, 0)
+            );
+        } else if (arrow.arrowType === 11) {
+            node.targets.push(
+                this.createNodeRelative(chunk, arrow, x, y, 0, -1),
+                this.createNodeRelative(chunk, arrow, x, y, 0, -2)
+            );
+        } else if (arrow.arrowType === 12) {
+            node.targets.push(
+                this.createNodeRelative(chunk, arrow, x, y, 0,  0),
+                this.createNodeRelative(chunk, arrow, x, y, 0, -1)
+            );
+        } else if (arrow.arrowType === 13) {
+            node.targets.push(
+                this.createNodeRelative(chunk, arrow, x, y, -1, 0),
+                this.createNodeRelative(chunk, arrow, x, y,  0, 0),
+                this.createNodeRelative(chunk, arrow, x, y,  1, 0)
+            );
         }
         return node;
     }
 
     private simplifyNodes() {
-
+        this.map.chunks.forEach((chunk) => {
+            for (let y = 0; y < CHUNK_SIZE; ++y)
+                for (let x = 0; x < CHUNK_SIZE; ++x) {
+                    const arrow = chunk.getArrow(x, y);
+                    if (arrow.arrowType > 0) {
+                        arrow.node = arrow.originalNode;
+                        arrow.offset = 0;
+                        this.nodes.push(arrow.node);
+                    }
+                }
+        });
     }
 
     private readonly tickCallback = () => {
@@ -229,12 +303,18 @@ export class Game {
     private readonly afterFrameCallback = () => {
         this.draw();
         this.fpsMeter.step();
-        this.ui.debugInfo.update(this.tpsMeter.value, this.fpsMeter.value);
+        let updateSystemLabel: string;
+        if (updateSystem === 0) {
+            updateSystemLabel = "CA";
+        } else {
+            updateSystemLabel = "Nodes";
+        }
+        this.ui.debugInfo.update(this.tpsMeter.value, this.fpsMeter.value, updateSystemLabel);
     };
 
     
     private update() {
-        if (UPDATE_SYSTEM === 0) {
+        if (updateSystem === 0) {
             this.updateCA();
         } else {
             this.updateNodes();
@@ -321,7 +401,38 @@ export class Game {
     }
 
     private updateNodes() {
-
+        this.nodes.forEach((node) => {
+            node.lastSignal = node.signals[0];
+            if (node.signals.pop()) {
+                for (const target of node.targets) {
+                    if (target)
+                        ++target.signalCount;
+                }
+            }
+        });
+        this.nodes.forEach((node) => {
+            let active = node.lastSignal;
+            if (node.type === 0) {
+                active = node.signalCount > 0;
+            } else if (node.type === 1) {
+                active = true;
+            } else if (node.type === 2) {
+                active = node.signalCount === 0;
+            } else if (node.type === 3) {
+                active = node.signalCount >= 2;
+            } else if (node.type === 4) {
+                active = (node.signalCount % 2) === 1;
+            } else if (node.type === 5) {
+                if (node.signalCount > 0)
+                    active = !active;
+            } else if (node.type === 6) {
+                if (node.signalCount > 0)
+                    active = (node.signalCount % 2) === 0;
+            }
+            node.signals.unshift(active);
+            node.lastSignalCount = node.signalCount;
+            node.signalCount = 0;
+        });
     }
 
     private updatePlayerInput() {
@@ -406,9 +517,15 @@ export class Game {
                         const xOffset = (chunkX * CHUNK_SIZE + x) * this.scale + arrowOffsetX;
                         const yOffset = (chunkY * CHUNK_SIZE + y) * this.scale + arrowOffsetY;
                         let color: [number, number, number];
-                        if (arrow.active) color = [1, 0, 0];
-                        else if (arrow.lastState.signalCount > 0) color = [.3, .5, 1];
-                        else color = [1, 1, 1];
+                        if (updateSystem === 0) {
+                            if (arrow.active) color = [1, 0, 0];
+                            else if (arrow.lastState.signalCount > 0) color = [.3, .5, 1];
+                            else color = [1, 1, 1];
+                        } else {
+                            if (arrow.node.signals[arrow.offset]) color = [1, 0, 0];
+                            else if (arrow.offset === 0 && arrow.node.lastSignalCount > 0) color = [.3, .5, 1];
+                            else color = [1, 1, 1];
+                        }
                         this.render.drawArrow([xOffset, yOffset], this.scale, arrow.arrowType, arrow.medalType, arrow.rotation, arrow.flipped, color);
                     }
                 }
@@ -445,6 +562,8 @@ export class Game {
                 false,
                 [1, 1, 1]);
         }
+
+        this.render.disableArrowShader();
 
         for (const hash of this.highlightedArrows) {
             const [arrowX, arrowY] = hash2pos(hash);
@@ -567,10 +686,11 @@ export class Game {
         if (/^Digit[0-9]$/.test(event.code)) {
             this.ui.toolbar.selectItemOnCurrentPage(+event.code.at(-1));
         } else if (event.code === "Tab") {
-            event.preventDefault();
             this.ui.toolbar.nextSection();
         } else if (event.code === "F3") {
             this.ui.debugInfo.toggle();
+        } else if (event.code === "F5") {
+            updateSystem = (updateSystem + 1) % 2;
         } else if (event.code === "Backquote") {
             this.ui.toolbar.clearSelection();
         } else if (event.code === "KeyN") {
@@ -640,7 +760,11 @@ export class Game {
         const arrow = this.map.getArrow(arrowX, arrowY);
         if (!arrow || arrow.arrowType === 0)
             return;
-        arrow.active = !arrow.active;
+        if (updateSystem === 0) {
+            arrow.active = !arrow.active;
+        } else {
+            arrow.node.signals[arrow.offset] = !arrow.node.signals[arrow.offset];
+        }
     };
 
     private readonly onWheel = (event: WheelEvent) => {
@@ -668,7 +792,6 @@ export class Game {
             const [arrowX, arrowY] = hash2pos(hash);
             tempMap.getOrCreateArrow(arrowX - minX, arrowY - minY).merge(this.map.getArrow(arrowX, arrowY));
         }
-        console.log(save(tempMap));
         data.setData("text/plain", save(tempMap));
     }
 

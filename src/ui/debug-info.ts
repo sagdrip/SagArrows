@@ -9,16 +9,17 @@ export class DebugInfo {
         this.element = createElement("span", "debug-info hidden");
         parent.appendChild(this.element);
 
-        this.update(0, 0);
+        this.update(0, 0, "N/A");
     }
 
     destroy() {
         this.element.remove();
     }
 
-    update(tps: number, fps: number) {
+    update(tps: number, fps: number, updateSystem: string) {
         this.element.innerText = `FPS: ${fps.toFixed(FRACTION_DIGITS)}\n` +
-                                 `TPS: ${tps.toFixed(FRACTION_DIGITS)}`;
+                                 `TPS: ${tps.toFixed(FRACTION_DIGITS)}\n` +
+                                 `Update system: ${updateSystem}`;
     }
 
     toggle() {

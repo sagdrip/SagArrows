@@ -96,10 +96,11 @@ html, body {
     background-color: #ffe4a0;
 }
 
-.icon-container {
+.icon {
+    display: block;
     width: 100%;
     height: 100%;
-    overflow: hidden;
+    background-size: contain;
 }
 
 .slider {
