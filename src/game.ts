@@ -402,8 +402,8 @@ export class Game {
 
     private updateNodes() {
         this.nodes.forEach((node) => {
-            node.lastSignal = node.signals[0];
-            if (node.signals.pop()) {
+            node.lastSignal = node.signals.at(0);
+            if (node.signals.at(-1)) {
                 for (const target of node.targets) {
                     if (target)
                         ++target.signalCount;
@@ -429,7 +429,7 @@ export class Game {
                 if (node.signalCount > 0)
                     active = (node.signalCount % 2) === 0;
             }
-            node.signals.unshift(active);
+            node.signals.insert(active);
             node.lastSignalCount = node.signalCount;
             node.signalCount = 0;
         });
@@ -522,7 +522,7 @@ export class Game {
                             else if (arrow.lastState.signalCount > 0) color = [.3, .5, 1];
                             else color = [1, 1, 1];
                         } else {
-                            if (arrow.node.signals[arrow.offset]) color = [1, 0, 0];
+                            if (arrow.node.signals.at(arrow.offset)) color = [1, 0, 0];
                             else if (arrow.offset === 0 && arrow.node.lastSignalCount > 0) color = [.3, .5, 1];
                             else color = [1, 1, 1];
                         }
@@ -691,6 +691,7 @@ export class Game {
             this.ui.debugInfo.toggle();
         } else if (event.code === "F5") {
             updateSystem = (updateSystem + 1) % 2;
+            this.ticker.setPaused(false);
         } else if (event.code === "Backquote") {
             this.ui.toolbar.clearSelection();
         } else if (event.code === "KeyN") {
@@ -763,7 +764,7 @@ export class Game {
         if (updateSystem === 0) {
             arrow.active = !arrow.active;
         } else {
-            arrow.node.signals[arrow.offset] = !arrow.node.signals[arrow.offset];
+            arrow.node.signals.set(arrow.offset, !arrow.node.signals.at(arrow.offset));
         }
     };
 
