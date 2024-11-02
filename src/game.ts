@@ -32,11 +32,13 @@ export class Game {
     private readonly tpsMeter: Meter;
     private readonly fpsMeter: Meter;
 
+    private simplifiedNodes: WeakMap<LogicNode, LogicNode>;
+
     private saveInterval: number;
 
     private mousePosition: readonly [number, number] = [0, 0];
 
-    private nodes: LogicNode[] = [];
+    private nodes: Set<LogicNode> = new Set();
 
     private mouseStartPosition: readonly [number, number];
     private startOffset: readonly [number, number];
@@ -142,7 +144,7 @@ export class Game {
         });
     }
 
-    private createNodeRelative(chunk: Chunk, arrow: Arrow, x: number, y: number, dx: number, dy: number) {
+    private addTargetNode(node: LogicNode, chunk: Chunk, arrow: Arrow, x: number, y: number, dx: number, dy: number) {
         if (arrow.flipped)
             dx = -dx;
         if (arrow.rotation === 0) {
@@ -194,7 +196,9 @@ export class Game {
         }
         if (!targetChunk)
             return;
-        return this.createNode(targetChunk, x, y);
+        const target = this.createNode(targetChunk, x, y);
+        if (target)
+            node.targets.push(target);
     }
 
     private createNode(chunk: Chunk, x: number, y: number) {
@@ -203,90 +207,99 @@ export class Game {
             return;
         if (arrow.originalNode)
             return arrow.originalNode;
-        const node = new LogicNode(arrow.medalType, 1);
+        const node = new LogicNode([arrow], arrow.medalType, 1);
         arrow.originalNode = node;
+        arrow.node = node;
+        arrow.offset = 0;
         if (arrow.arrowType === 1) {
-            node.targets.push(
-                this.createNodeRelative(chunk, arrow, x, y, 0, -1)
-            );
+            this.addTargetNode(node, chunk, arrow, x, y, 0, -1);
         } else if (arrow.arrowType === 2) {
-            node.targets.push(
-                this.createNodeRelative(chunk, arrow, x, y, -1, 0),
-                this.createNodeRelative(chunk, arrow, x, y,  1, 0)
-            );
+            this.addTargetNode(node, chunk, arrow, x, y, -1, 0);
+            this.addTargetNode(node, chunk, arrow, x, y,  1, 0);
         } else if (arrow.arrowType === 3) {
-            node.targets.push(
-                this.createNodeRelative(chunk, arrow, x, y,  0, -1),
-                this.createNodeRelative(chunk, arrow, x, y,  1,  0)
-            );
+            this.addTargetNode(node, chunk, arrow, x, y,  0, -1);
+            this.addTargetNode(node, chunk, arrow, x, y,  1,  0);
         } else if (arrow.arrowType === 4) {
-            node.targets.push(
-                this.createNodeRelative(chunk, arrow, x, y, -1,  0),
-                this.createNodeRelative(chunk, arrow, x, y,  0, -1),
-                this.createNodeRelative(chunk, arrow, x, y,  1,  0)
-            );
+            this.addTargetNode(node, chunk, arrow, x, y, -1,  0);
+            this.addTargetNode(node, chunk, arrow, x, y,  0, -1);
+            this.addTargetNode(node, chunk, arrow, x, y,  1,  0);
         } else if (arrow.arrowType === 5) {
-            node.targets.push(
-                this.createNodeRelative(chunk, arrow, x, y, -1,  0),
-                this.createNodeRelative(chunk, arrow, x, y,  1,  0),
-                this.createNodeRelative(chunk, arrow, x, y,  0, -1),
-                this.createNodeRelative(chunk, arrow, x, y,  0,  1)
-            );
+            this.addTargetNode(node, chunk, arrow, x, y, -1,  0);
+            this.addTargetNode(node, chunk, arrow, x, y,  1,  0);
+            this.addTargetNode(node, chunk, arrow, x, y,  0, -1);
+            this.addTargetNode(node, chunk, arrow, x, y,  0,  1);
         } else if (arrow.arrowType === 6) {
-            node.targets.push(
-                this.createNodeRelative(chunk, arrow, x, y, 0, -2)
-            );
+            this.addTargetNode(node, chunk, arrow, x, y, 0, -2);
         } else if (arrow.arrowType === 7) {
-            node.targets.push(
-                this.createNodeRelative(chunk, arrow, x, y, 1, -1)
-            );
+            this.addTargetNode(node, chunk, arrow, x, y, 1, -1);
         } else if (arrow.arrowType === 8) {
-            node.targets.push(
-                this.createNodeRelative(chunk, arrow, x, y, 0, -1),
-                this.createNodeRelative(chunk, arrow, x, y, 1, -1)
-            );
+            this.addTargetNode(node, chunk, arrow, x, y, 0, -1);
+            this.addTargetNode(node, chunk, arrow, x, y, 1, -1);
         } else if (arrow.arrowType === 9) {
-            node.targets.push(
-                this.createNodeRelative(chunk, arrow, x, y,  0, -2),
-                this.createNodeRelative(chunk, arrow, x, y,  1,  0)
-            );
+            this.addTargetNode(node, chunk, arrow, x, y,  0, -2);
+            this.addTargetNode(node, chunk, arrow, x, y,  1,  0);
         } else if (arrow.arrowType === 10) {
-            node.targets.push(
-                this.createNodeRelative(chunk, arrow, x, y, -2, 0),
-                this.createNodeRelative(chunk, arrow, x, y,  1, 0)
-            );
+            this.addTargetNode(node, chunk, arrow, x, y, -2, 0);
+            this.addTargetNode(node, chunk, arrow, x, y,  1, 0);
         } else if (arrow.arrowType === 11) {
-            node.targets.push(
-                this.createNodeRelative(chunk, arrow, x, y, 0, -1),
-                this.createNodeRelative(chunk, arrow, x, y, 0, -2)
-            );
+            this.addTargetNode(node, chunk, arrow, x, y, 0, -1);
+            this.addTargetNode(node, chunk, arrow, x, y, 0, -2);
         } else if (arrow.arrowType === 12) {
-            node.targets.push(
-                this.createNodeRelative(chunk, arrow, x, y, 0,  0),
-                this.createNodeRelative(chunk, arrow, x, y, 0, -1)
-            );
+            this.addTargetNode(node, chunk, arrow, x, y, 0,  0);
+            this.addTargetNode(node, chunk, arrow, x, y, 0, -1);
         } else if (arrow.arrowType === 13) {
-            node.targets.push(
-                this.createNodeRelative(chunk, arrow, x, y, -1, 0),
-                this.createNodeRelative(chunk, arrow, x, y,  0, 0),
-                this.createNodeRelative(chunk, arrow, x, y,  1, 0)
-            );
+            this.addTargetNode(node, chunk, arrow, x, y, -1, 0);
+            this.addTargetNode(node, chunk, arrow, x, y,  0, 0);
+            this.addTargetNode(node, chunk, arrow, x, y,  1, 0);
         }
         return node;
     }
 
     private simplifyNodes() {
+        this.simplifiedNodes = new WeakMap();
         this.map.chunks.forEach((chunk) => {
             for (let y = 0; y < CHUNK_SIZE; ++y)
                 for (let x = 0; x < CHUNK_SIZE; ++x) {
                     const arrow = chunk.getArrow(x, y);
-                    if (arrow.arrowType > 0) {
-                        arrow.node = arrow.originalNode;
-                        arrow.offset = 0;
-                        this.nodes.push(arrow.node);
-                    }
+                    if (arrow.node)
+                        this.simplifyNode(arrow.node);
                 }
         });
+        console.log(this.nodes);
+        delete this.simplifiedNodes;
+    }
+
+    private simplifyNode(node: LogicNode) {
+        const existing = this.simplifiedNodes.get(node);
+        if (existing)
+            return existing;
+        const simplified = node.copy();
+        this.simplifiedNodes.set(node, simplified);
+        this.simplifiedNodes.set(simplified, simplified);
+        this.nodes.add(simplified);
+        if (node.targets.length === 1) {
+            const [target] = node.targets;
+            if (target === node) {
+                simplified.targets.push(simplified);
+            } else if (target.type === 0) {
+                const simplifiedTarget = this.simplifyNode(target);
+                this.nodes.delete(simplifiedTarget);
+                simplified.resize(node.size + simplifiedTarget.size);
+                simplified.arrows.push(...simplifiedTarget.arrows);
+                simplified.targets.push(...simplifiedTarget.targets);
+                for (const arrow of simplified.arrows)
+                    arrow.node = simplified;
+                for (const arrow of simplifiedTarget.arrows)
+                    arrow.offset += node.size;
+            } else {
+                simplified.targets.push(this.simplifyNode(target));
+            }
+        } else {
+            for (const target of node.targets) {
+                simplified.targets.push(this.simplifyNode(target));
+            }
+        }
+        return simplified;
     }
 
     private readonly tickCallback = () => {

@@ -9,7 +9,7 @@ export class Queue<T> {
     }
 
     insert(value: T) {
-        this.offset += this.size - 1;
+        this.offset = (this.offset + this.size - 1) % this.size;
         this.array[this.offset] = value;
     }
 
