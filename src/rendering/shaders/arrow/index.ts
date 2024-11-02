@@ -39,6 +39,7 @@ export default class ArrowShader extends Shader {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             gl.generateMipmap(gl.TEXTURE_2D);
+            arrowAtlasImage.remove();
         };
 
         this.medalAtlasTexture = gl.createTexture();
@@ -52,7 +53,14 @@ export default class ArrowShader extends Shader {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             gl.generateMipmap(gl.TEXTURE_2D);
+            medalAtlasImage.remove();
         };
+    }
+
+    destroy() {
+        super.destroy();
+        this.gl.deleteTexture(this.arrowAtlasTexture);
+        this.gl.deleteTexture(this.medalAtlasTexture);
     }
 
     getVertexShader() {

@@ -7,7 +7,7 @@ export const CELL_SIZE = 64;
 
 export const ATLAS_TILE_SIZE = 512;
 
-export class Render { // TODO: Add dispose method and optimize GPU usage
+export class Render { // TODO: Optimize GPU usage
     private readonly gl: WebGLRenderingContext;
 
     private readonly positionBuffer: WebGLBuffer;
@@ -30,6 +30,9 @@ export class Render { // TODO: Add dispose method and optimize GPU usage
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(QUAD_INDICES), this.gl.STATIC_DRAW);
 
+        this.gl.colorMask(true, true, true, true);
+        this.gl.clearColor(1, 1, 1, 1);
+
         this.gl.enable(this.gl.BLEND);
         this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
         this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
@@ -43,6 +46,15 @@ export class Render { // TODO: Add dispose method and optimize GPU usage
         gl.uniform1i(this.arrowShader.medalAtlasUniform, 1);
     }
 
+    destroy() {
+        this.gl.deleteBuffer(this.positionBuffer);
+        this.gl.deleteBuffer(this.indexBuffer);
+        this.arrowShader.destroy();
+        this.backgroundShader.destroy();
+        this.rectShader.destroy();
+        this.gl.getExtension("WEBGL_lose_context")?.loseContext();
+    }
+
     resize() {
         const canvas = this.gl.canvas as HTMLCanvasElement;
         canvas.width = canvas.clientWidth;
@@ -51,8 +63,6 @@ export class Render { // TODO: Add dispose method and optimize GPU usage
     }
 
     clear() {
-        this.gl.colorMask(true, true, true, true);
-        this.gl.clearColor(1, 1, 1, 1);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
     }
 

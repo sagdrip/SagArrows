@@ -1,8 +1,8 @@
 import { compileShader, createProgram } from "../webgl";
 
 export abstract class Shader {
-    private gl: WebGLRenderingContext;
-    private program: WebGLProgram;
+    protected readonly gl: WebGLRenderingContext;
+    private readonly program: WebGLProgram;
 
     readonly positionAttribute: number;
 
