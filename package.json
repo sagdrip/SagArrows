@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "webpack serve --config webpack.dev.js",
     "build": "npm run split-textures && webpack --config webpack.prod.js",
-    "split-textures": "npm run split-arrow-atlas && npm run split-medal-atlas",
+    "split-textures": "mkdirp ./public/sprites && concurrently \"npm run split-arrow-atlas\" \"npm run split-medal-atlas\"",
     "split-arrow-atlas": "magick ./res/atlas.png -crop 512x512 +repage +adjoin ./public/sprites/arrow-%d.png",
     "split-medal-atlas": "magick ./res/medals.png -crop 512x512 +repage +adjoin ./public/sprites/medal-%d.png"
   },
@@ -14,6 +14,8 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "concurrently": "^9.1.0",
+    "mkdirp": "^3.0.1",
     "ts-loader": "^9.5.1",
     "webpack": "^5.95.0",
     "webpack-cli": "^5.1.4",
