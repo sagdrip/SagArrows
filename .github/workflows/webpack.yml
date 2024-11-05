@@ -18,7 +18,7 @@ jobs:
       with:
         node-version: 22.x
     
-    - uses: mfinelli/setup-imagemagick@v1
+    - uses: mfinelli/setup-imagemagick@v5
 
     - name: Build
       run: |
