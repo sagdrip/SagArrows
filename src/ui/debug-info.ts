@@ -1,4 +1,4 @@
-import { createElement } from "../dom";
+import { createElement } from "../util/dom";
 
 export const FRACTION_DIGITS = 1;
 

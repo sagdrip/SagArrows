@@ -1,4 +1,4 @@
-import { createElement } from "../dom";
+import { createElement } from "../util/dom";
 
 export const TPS_VALUES = [2, 16, 64, 256, 1024, 4096, 16384, 65536];
 

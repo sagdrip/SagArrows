@@ -1,8 +1,5 @@
-import { createElement } from "../dom";
+import { createElement } from "../util/dom";
 import { Icon } from "./icon";
-import arrowAtlas from "../../res/atlas.png";
-import medalAtlas from "../../res/medals.png";
-import { ATLAS_TILE_SIZE } from "../rendering/render";
 
 export const ARROWS = [
     [1, 2, 3, 4, 5],
@@ -60,9 +57,8 @@ export class Toolbar extends EventTarget {
             for (let i = 0; i < PAGE_SIZE; ++i) {
                 const item = createElement("div", "toolbar-item");
                 if (arrows[i]) {
-                    const arrowType = arrows[i] - 1;
                     const currentArrowId = arrowId;
-                    const icon = new Icon(item, arrowAtlas, arrowType, ATLAS_TILE_SIZE, ATLAS_TILE_SIZE);
+                    const icon = new Icon(item, `sprites/arrow-${arrows[i] - 1}.png`);
                     icon.addEventListener("click", () => {
                         this.selectItem(0, currentArrowId);
                     });
@@ -87,8 +83,7 @@ export class Toolbar extends EventTarget {
             for (let i = 0; i < PAGE_SIZE; ++i) {
                 const item = createElement("div", "toolbar-item");
                 if (medals[i]) {
-                    const medalType = medals[i] - 1;
-                    const icon = new Icon(item, medalAtlas, medalType, ATLAS_TILE_SIZE, ATLAS_TILE_SIZE);
+                    const icon = new Icon(item, `sprites/medal-${medals[i] - 1}.png`);
                     const currentMedalId = medalId;
                     icon.addEventListener("click", () => {
                         this.selectItem(1, currentMedalId);

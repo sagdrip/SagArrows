@@ -29,6 +29,9 @@ export default class ArrowShader extends Shader {
         this.alphaUniform = this.getUniformLocation("u_alpha");
 
         this.arrowAtlasTexture = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.arrowAtlasTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
         const arrowAtlasImage = new Image();
         arrowAtlasImage.src = arrowAtlas;
         arrowAtlasImage.onload = () => {
@@ -43,6 +46,9 @@ export default class ArrowShader extends Shader {
         };
 
         this.medalAtlasTexture = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, this.medalAtlasTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
         const medalAtlasImage = new Image();
         medalAtlasImage.src = medalAtlas;
         medalAtlasImage.onload = () => {
