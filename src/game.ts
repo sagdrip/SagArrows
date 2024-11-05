@@ -197,8 +197,10 @@ export class Game {
         if (!targetChunk)
             return;
         const target = this.createNode(targetChunk, x, y);
-        if (target)
+        if (target) {
             node.targets.push(target);
+            target.sources.push(node);
+        }
     }
 
     private createNode(chunk: Chunk, x: number, y: number) {
@@ -281,14 +283,12 @@ export class Game {
             const [target] = node.targets;
             if (target === node) {
                 simplified.targets.push(simplified);
-            } else if (target.type === 0) {
+            } else if (target.type === 0 && target.sources.length === 1) {
                 const simplifiedTarget = this.simplifyNode(target);
                 this.nodes.delete(simplifiedTarget);
                 simplified.resize(node.size + simplifiedTarget.size);
                 simplified.arrows.push(...simplifiedTarget.arrows);
                 simplified.targets.push(...simplifiedTarget.targets);
-                for (const arrow of simplified.arrows)
-                    arrow.node = simplified;
                 for (const arrow of simplifiedTarget.arrows)
                     arrow.offset += node.size;
             } else {
@@ -299,6 +299,10 @@ export class Game {
                 simplified.targets.push(this.simplifyNode(target));
             }
         }
+        for (const arrow of simplified.arrows)
+            arrow.node = simplified;
+        for (const target of simplified.targets)
+            target.sources.push(simplified);
         return simplified;
     }
 

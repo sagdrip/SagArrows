@@ -5,6 +5,7 @@ export class LogicNode {
     readonly arrows: Arrow[];
     readonly type: number;
     readonly targets: LogicNode[] = [];
+    readonly sources: LogicNode[] = [];
     size: number;
     signals: Queue<boolean>;
     signalCount: number = 0;
