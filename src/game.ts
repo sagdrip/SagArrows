@@ -267,8 +267,13 @@ export class Game {
                         this.simplifyNode(arrow.node);
                 }
         });
-        console.log(this.nodes);
         delete this.simplifiedNodes;
+        this.nodes.forEach((node) => {
+            for (const arrow of node.arrows)
+                arrow.node = node;
+            for (const target of node.targets)
+                target.sources.push(node);
+        });
     }
 
     private simplifyNode(node: LogicNode) {
@@ -281,10 +286,8 @@ export class Game {
         this.nodes.add(simplified);
         if (node.targets.length === 1) {
             const [target] = node.targets;
-            if (target === node) {
-                simplified.targets.push(simplified);
-            } else if (target.type === 0 && target.sources.length === 1) {
-                const simplifiedTarget = this.simplifyNode(target);
+            const simplifiedTarget = this.simplifyNode(target);
+            if (target.type === 0 && target.sources.length === 1 && simplifiedTarget.targets.length > 0) { // TODO: Is this a hack?
                 this.nodes.delete(simplifiedTarget);
                 simplified.resize(node.size + simplifiedTarget.size);
                 simplified.arrows.push(...simplifiedTarget.arrows);
@@ -292,17 +295,13 @@ export class Game {
                 for (const arrow of simplifiedTarget.arrows)
                     arrow.offset += node.size;
             } else {
-                simplified.targets.push(this.simplifyNode(target));
+                simplified.targets.push(simplifiedTarget);
             }
         } else {
             for (const target of node.targets) {
                 simplified.targets.push(this.simplifyNode(target));
             }
         }
-        for (const arrow of simplified.arrows)
-            arrow.node = simplified;
-        for (const target of simplified.targets)
-            target.sources.push(simplified);
         return simplified;
     }
 
@@ -418,6 +417,7 @@ export class Game {
     }
 
     private updateNodes() {
+        // TODO: Use Array instead of Set
         this.nodes.forEach((node) => {
             node.lastSignal = node.signals.at(0);
             if (node.signals.at(-1)) {
@@ -429,22 +429,30 @@ export class Game {
         });
         this.nodes.forEach((node) => {
             let active = node.lastSignal;
-            if (node.type === 0) {
-                active = node.signalCount > 0;
-            } else if (node.type === 1) {
-                active = true;
-            } else if (node.type === 2) {
-                active = node.signalCount === 0;
-            } else if (node.type === 3) {
-                active = node.signalCount >= 2;
-            } else if (node.type === 4) {
-                active = (node.signalCount % 2) === 1;
-            } else if (node.type === 5) {
-                if (node.signalCount > 0)
-                    active = !active;
-            } else if (node.type === 6) {
-                if (node.signalCount > 0)
-                    active = (node.signalCount % 2) === 0;
+            switch (node.type) {
+                case 0:
+                    active = node.signalCount > 0;
+                    break;
+                case 1:
+                    active = true;
+                    break;
+                case 2:
+                    active = node.signalCount === 0;
+                    break;
+                case 3:
+                    active = node.signalCount >= 2;
+                    break;
+                case 4:
+                    active = (node.signalCount % 2) === 1;
+                    break;
+                case 5:
+                    if (node.signalCount > 0)
+                        active = !active;
+                    break;
+                case 6:
+                    if (node.signalCount > 0)
+                        active = (node.signalCount % 2) === 0;
+                    break;
             }
             node.signals.insert(active);
             node.lastSignalCount = node.signalCount;
