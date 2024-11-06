@@ -39,6 +39,7 @@ export class Game {
     private mousePosition: readonly [number, number] = [0, 0];
 
     private nodes: Set<LogicNode> = new Set();
+    private nodeArray: LogicNode[] = [];
 
     private mouseStartPosition: readonly [number, number];
     private startOffset: readonly [number, number];
@@ -274,6 +275,7 @@ export class Game {
             for (const target of node.targets)
                 target.sources.push(node);
         });
+        this.nodeArray = Array.from(this.nodes);
     }
 
     private simplifyNode(node: LogicNode) {
@@ -417,8 +419,7 @@ export class Game {
     }
 
     private updateNodes() {
-        // TODO: Use Array instead of Set
-        this.nodes.forEach((node) => {
+        this.nodeArray.forEach((node) => {
             node.lastSignal = node.signals.at(0);
             if (node.signals.at(-1)) {
                 for (const target of node.targets) {
@@ -427,7 +428,7 @@ export class Game {
                 }
             }
         });
-        this.nodes.forEach((node) => {
+        this.nodeArray.forEach((node) => {
             let active = node.lastSignal;
             switch (node.type) {
                 case 0:
