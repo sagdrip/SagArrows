@@ -11,6 +11,7 @@ export class LogicNode {
     signalCount: number = 0;
     lastSignal: boolean = false;
     lastSignalCount: number = 0;
+    ready: boolean = false;
 
     constructor(arrows: Arrow[], type: number, size: number) {
         this.arrows = arrows;
