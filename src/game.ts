@@ -277,7 +277,6 @@ export class Game {
                 target.sources.push(node);
         });
         this.nodeArray = Array.from(this.nodes);
-        console.log(this.nodes);
     }
 
     private simplifyNode(node: LogicNode) {
@@ -368,72 +367,72 @@ export class Game {
     }
 
     private getTargetArrows(chunk: Chunk, arrow: Arrow, x: number, y: number): Arrow[] {
-        const arrows = [];
+        const arrows: Arrow[] = [];
         if (arrow.arrowType === 1) {
             arrows.push(
-                this.getArrowRelative(chunk, arrow, x, y, 0, -1)[0]
+                this.getArrowRelative(chunk, arrow, x, y, 0, -1)?.[1]
             );
         } else if (arrow.arrowType === 2) {
             arrows.push(
-                this.getArrowRelative(chunk, arrow, x, y, -1, 0)[0],
-                this.getArrowRelative(chunk, arrow, x, y,  1, 0)[0]
+                this.getArrowRelative(chunk, arrow, x, y, -1, 0)?.[1],
+                this.getArrowRelative(chunk, arrow, x, y,  1, 0)?.[1]
             );
         } else if (arrow.arrowType === 3) {
             arrows.push(
-                this.getArrowRelative(chunk, arrow, x, y,  0, -1)[0],
-                this.getArrowRelative(chunk, arrow, x, y,  1,  0)[0]
+                this.getArrowRelative(chunk, arrow, x, y,  0, -1)?.[1],
+                this.getArrowRelative(chunk, arrow, x, y,  1,  0)?.[1]
             );
         } else if (arrow.arrowType === 4) {
             arrows.push(
-                this.getArrowRelative(chunk, arrow, x, y, -1,  0)[0],
-                this.getArrowRelative(chunk, arrow, x, y,  0, -1)[0],
-                this.getArrowRelative(chunk, arrow, x, y,  1,  0)[0]
+                this.getArrowRelative(chunk, arrow, x, y, -1,  0)?.[1],
+                this.getArrowRelative(chunk, arrow, x, y,  0, -1)?.[1],
+                this.getArrowRelative(chunk, arrow, x, y,  1,  0)?.[1]
             );
         } else if (arrow.arrowType === 5) {
             arrows.push(
-                this.getArrowRelative(chunk, arrow, x, y, -1,  0)[0],
-                this.getArrowRelative(chunk, arrow, x, y,  1,  0)[0],
-                this.getArrowRelative(chunk, arrow, x, y,  0, -1)[0],
-                this.getArrowRelative(chunk, arrow, x, y,  0,  1)[0]
+                this.getArrowRelative(chunk, arrow, x, y, -1,  0)?.[1],
+                this.getArrowRelative(chunk, arrow, x, y,  1,  0)?.[1],
+                this.getArrowRelative(chunk, arrow, x, y,  0, -1)?.[1],
+                this.getArrowRelative(chunk, arrow, x, y,  0,  1)?.[1]
             );
         } else if (arrow.arrowType === 6) {
             arrows.push(
-                this.getArrowRelative(chunk, arrow, x, y, 0, -2)[0]
+                this.getArrowRelative(chunk, arrow, x, y, 0, -2)?.[1]
             );
         } else if (arrow.arrowType === 7) {
             arrows.push(
-                this.getArrowRelative(chunk, arrow, x, y, 1, -1)[0]
+                this.getArrowRelative(chunk, arrow, x, y, 1, -1)?.[1]
             );
         } else if (arrow.arrowType === 8) {
             arrows.push(
-                this.getArrowRelative(chunk, arrow, x, y, 0, -1)[0],
-                this.getArrowRelative(chunk, arrow, x, y, 1, -1)[0]
+                this.getArrowRelative(chunk, arrow, x, y, 0, -1)?.[1],
+                this.getArrowRelative(chunk, arrow, x, y, 1, -1)?.[1]
             );
         } else if (arrow.arrowType === 9) {
             arrows.push(
-                this.getArrowRelative(chunk, arrow, x, y,  0, -2)[0],
-                this.getArrowRelative(chunk, arrow, x, y,  1,  0)[0]
+                this.getArrowRelative(chunk, arrow, x, y,  0, -2)?.[1],
+                this.getArrowRelative(chunk, arrow, x, y,  1,  0)?.[1]
             );
         } else if (arrow.arrowType === 10) {
             arrows.push(
-                this.getArrowRelative(chunk, arrow, x, y, -2, 0)[0],
-                this.getArrowRelative(chunk, arrow, x, y,  1, 0)[0]
+                this.getArrowRelative(chunk, arrow, x, y, -2, 0)?.[1],
+                this.getArrowRelative(chunk, arrow, x, y,  1, 0)?.[1]
             );
         } else if (arrow.arrowType === 11) {
             arrows.push(
-                this.getArrowRelative(chunk, arrow, x, y, 0, -1)[0],
-                this.getArrowRelative(chunk, arrow, x, y, 0, -2)[0]
+                this.getArrowRelative(chunk, arrow, x, y, 0, -1)?.[1],
+                this.getArrowRelative(chunk, arrow, x, y, 0, -2)?.[1]
             );
         } else if (arrow.arrowType === 12) {
             arrows.push(
-                this.getArrowRelative(chunk, arrow, x, y, 0,  0)[0],
-                this.getArrowRelative(chunk, arrow, x, y, 0, -1)[0]
+                this.getArrowRelative(chunk, arrow, x, y, 0,  0)?.[1],
+                this.getArrowRelative(chunk, arrow, x, y, 0, -1)?.[1]
             );
         } else if (arrow.arrowType === 13) {
             arrows.push(
-                this.getArrowRelative(chunk, arrow, x, y, -1, 0)[0],
-                this.getArrowRelative(chunk, arrow, x, y,  0, 0)[0],
-                this.getArrowRelative(chunk, arrow, x, y,  1, 0)[0]
+                this.getArrowRelative(chunk, arrow, x, y, -1, 0)?.[1],
+                this.getArrowRelative(chunk, arrow, x, y,  0, 0)?.[1],
+                this.getArrowRelative(chunk, arrow, x, y,  1, 0)?.[1]
             );
         }
         return arrows.filter((arrow) => arrow);
@@ -456,6 +455,7 @@ export class Game {
             this.getArrowRelative(chunk, arrow, x, y,  1, -1)
         ]
         return arrows
+                .filter((arrow) => arrow)
                 .filter(
                     ([sourceChunk, sourceArrow, [sourceX, sourceY]]) =>
                         this.getTargetArrows(sourceChunk, sourceArrow, sourceX, sourceY).includes(arrow))
@@ -631,13 +631,15 @@ export class Game {
                     const chunkX = ~~((x + nX) / 16) - nX;
                     const chunkY = ~~((y + nY) / 16) - nY;
                     const chunk = this.map.getChunk(chunkX, chunkY);
+                    if (targetArrow.arrowType > 0)
+                        NodeRestructuring.spliceNode(this.nodes, targetArrow.node, targetArrow.offset);
                     targetArrow.merge(arrow);
                     const node = new LogicNode([targetArrow], targetArrow.medalType, 1);
-                    arrow.node = node;
-                    arrow.offset = 0;
-                    const targets = this.getTargetArrows(chunk, arrow, x - chunkX * CHUNK_SIZE, y - chunkY * CHUNK_SIZE)
+                    targetArrow.node = node;
+                    targetArrow.offset = 0;
+                    const targets = this.getTargetArrows(chunk, targetArrow, x - chunkX * CHUNK_SIZE, y - chunkY * CHUNK_SIZE)
                                             .map((arrow): [LogicNode, number] => [arrow.node, arrow.offset]);
-                    const sources = this.getSourceArrows(chunk, arrow, x - chunkX * CHUNK_SIZE, y - chunkY * CHUNK_SIZE)
+                    const sources = this.getSourceArrows(chunk, targetArrow, x - chunkX * CHUNK_SIZE, y - chunkY * CHUNK_SIZE)
                                             .map((arrow): LogicNode => arrow.node);
                     NodeRestructuring.insertNode(this.nodes, node, targets, sources);
                 });
@@ -791,6 +793,23 @@ export class Game {
         }
     }
 
+    private exportGraph() {
+        const labels = ["|", "1", "!", "&", "^", "0/1", "F"];
+
+        let dot = `digraph {\n`;
+        this.nodeArray.forEach((node, index) => {
+            let label = labels[node.type];
+            node.arrows.forEach((arrow, index) => console.assert(arrow.offset === index, arrow));
+            if (node.targets.length === 0)
+                label += ` (${node.size})`;
+            dot += `  node${index} [label=${JSON.stringify(label)}]\n`;
+            for (const target of node.targets)
+                dot += `  node${index} -> node${this.nodeArray.indexOf(target)} [minlen=${node.size}, label=${node.size}]\n`
+        });
+        dot += `}`;
+        console.log(`https://dreampuf.github.io/GraphvizOnline/#${encodeURIComponent(dot)}`);
+    }
+
     setScale(scale: number, center: [number, number]) {
         if (scale < MIN_SCALE)
             scale = MIN_SCALE;
@@ -898,6 +917,8 @@ export class Game {
         } else if (event.code === "F5") {
             updateSystem = (updateSystem + 1) % 2;
             this.ticker.setPaused(false);
+        } else if (event.code === "F6") {
+            this.exportGraph();
         } else if (event.code === "Backquote") {
             this.ui.toolbar.clearSelection();
         } else if (event.code === "KeyN") {

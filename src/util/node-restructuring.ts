@@ -52,8 +52,12 @@ export namespace NodeRestructuring { // TODO: Preserve signals & make some fixes
             const [source] = sources;
             nodes.delete(source);
             node.resize(source.size + node.size);
+            for (const arrow of node.arrows)
+                arrow.offset += source.size;
             node.arrows.unshift(...source.arrows);
             node.sources.push(...source.sources);
+            for (const arrow of node.arrows)
+                arrow.node = node;
         } else {
             for (const source of sources) {
                 node.sources.push(source);
@@ -65,11 +69,11 @@ export namespace NodeRestructuring { // TODO: Preserve signals & make some fixes
             const [, targetNode] = splitNode(nodes, target, offset);
             if (targetNode.type === 0 && targetNode.sources.length === 0) {
                 nodes.delete(targetNode);
+                for (const arrow of targetNode.arrows)
+                    arrow.offset += node.size;
                 node.resize(node.size + targetNode.size);
                 node.arrows.push(...targetNode.arrows);
                 node.targets.push(...targetNode.targets);
-                for (const arrow of targetNode.arrows)
-                    arrow.offset += node.size;
             } else {
                 targetNode.sources.push(node);
                 node.targets.push(targetNode);
@@ -93,6 +97,10 @@ export namespace NodeRestructuring { // TODO: Preserve signals & make some fixes
             newNode.resize(source.size + node.size);
             newNode.arrows.unshift(...source.arrows);
             newNode.sources.push(...source.sources);
+            for (const arrow of node.arrows)
+                arrow.offset += source.size;
+            for (const arrow of newNode.arrows)
+                arrow.node = node;
         } else {
             for (const source of node.sources) {
                 source.targets.splice(source.targets.indexOf(node), 1);
