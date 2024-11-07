@@ -51,17 +51,17 @@ html, body {
 }
 
 .toolbar .toolbar-section-button.arrows-section-button {
-    background-image: url(ui-arrows.png);
+    background-image: url(../res/ui-arrows.png);
     background-size: contain;
 }
 
 .toolbar .toolbar-section-button.medals-section-button {
-    background-image: url(ui-medals.png);
+    background-image: url(../res/ui-medals.png);
     background-size: contain;
 }
 
 .toolbar .toolbar-arrow {
-    background-image: url(ui-arrow.png);
+    background-image: url(../res/ui-arrow.png);
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -72,7 +72,6 @@ html, body {
 }
 
 .toolbar .toolbar-arrow-left {
-    background-image: url(ui-arrow.png);
     transform: scaleX(-1);
 }
 

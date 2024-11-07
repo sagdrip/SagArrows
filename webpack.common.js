@@ -1,3 +1,7 @@
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const path = require('path');
 
 module.exports = {
@@ -10,12 +14,16 @@ module.exports = {
         include: [path.resolve(__dirname, 'src')],
       },
       {
+        test: /\.css$/,
+        use: [MiniCssExtractPlugin.loader, 'css-loader'],
+      },
+      {
         test: /\.png$/,
-        type: "asset/resource"
+        type: 'asset/resource'
       },
       {
         test: /\.(vert|frag)$/,
-        type: "asset/source"
+        type: 'asset/source'
       }
     ],
   },
@@ -26,4 +34,17 @@ module.exports = {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'public'),
   },
+  optimization: {
+    minimizer: [
+      `...`,
+      new CssMinimizerPlugin(),
+    ],
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: 'src/index.html'
+    }),
+    new FaviconsWebpackPlugin('res/favicon.png'),
+    new MiniCssExtractPlugin(),
+  ],
 };
